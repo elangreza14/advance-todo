@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/elangreza14/advance-todo/config"
-	"github.com/elangreza14/advance-todo/core/auth"
+	"github.com/elangreza14/advance-todo/internal/core/auth"
 	"github.com/elangreza14/advance-todo/dto"
 	"github.com/gofiber/fiber/v2"
 )
