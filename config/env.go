@@ -1,0 +1,81 @@
+package config
+
+import (
+	"errors"
+	"os"
+	"strconv"
+
+	"github.com/spf13/viper"
+)
+
+type (
+	Env struct {
+		POSTGRES_HOSTNAME         string `mapstructure:"POSTGRES_HOSTNAME"`
+		POSTGRES_SSL              string `mapstructure:"POSTGRES_SSL"`
+		POSTGRES_USER             string `mapstructure:"POSTGRES_USER"`
+		POSTGRES_PASSWORD         string `mapstructure:"POSTGRES_PASSWORD"`
+		POSTGRES_DB               string `mapstructure:"POSTGRES_DB"`
+		POSTGRES_PORT             int32  `mapstructure:"POSTGRES_PORT"`
+		POSTGRES_MIGRATION_FOLDER string `mapstructure:"POSTGRES_MIGRATION_FOLDER"`
+	}
+)
+
+func NewEnv() (*Env, error) {
+	env := &Env{}
+	envBase := os.Getenv("MODE")
+
+	switch {
+	case envBase != "":
+		viper.AddConfigPath(".")
+		viper.SetConfigName(envBase)
+		viper.SetConfigType("env")
+		viper.AutomaticEnv()
+
+		err := viper.ReadInConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		err = viper.Unmarshal(&env)
+		if err != nil {
+			return nil, err
+		}
+
+		return env, nil
+	default:
+		env.POSTGRES_HOSTNAME = env.getString("POSTGRES_HOSTNAME")
+		env.POSTGRES_SSL = env.getString("POSTGRES_SSL")
+		env.POSTGRES_USER = env.getString("POSTGRES_USER")
+		env.POSTGRES_PASSWORD = env.getString("POSTGRES_PASSWORD")
+		env.POSTGRES_DB = env.getString("POSTGRES_DB")
+		port, err := env.getInt32("POSTGRES_PORT")
+		if err != nil {
+			return nil, err
+		}
+		env.POSTGRES_PORT = *port
+		env.POSTGRES_MIGRATION_FOLDER = env.getString("POSTGRES_MIGRATION_FOLDER")
+
+		return env, nil
+	}
+}
+
+func (e *Env) getString(envName string) string {
+	if res, ok := os.LookupEnv(envName); ok {
+		return res
+	}
+	return ""
+}
+
+func (e *Env) getInt32(envName string) (*int32, error) {
+	if res, ok := os.LookupEnv(envName); ok {
+		resInt, err := strconv.Atoi(res)
+		if err != nil {
+			return nil, err
+		}
+
+		resInt32 := int32(resInt)
+		return &resInt32, nil
+	}
+
+	return nil, errors.New("error parsing to int 32 data")
+}
