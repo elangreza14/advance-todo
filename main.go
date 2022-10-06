@@ -8,7 +8,7 @@ import (
 	postgresRepo "github.com/elangreza14/advance-todo/adapter/postgres"
 	"github.com/elangreza14/advance-todo/config"
 	"github.com/elangreza14/advance-todo/api"
-	"github.com/elangreza14/advance-todo/core/auth"
+	"github.com/elangreza14/advance-todo/internal/core/auth"
 	"github.com/gofiber/fiber/v2"
 )
 
