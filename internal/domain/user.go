@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	"github.com/elangreza14/advance-todo/dto"
+	"github.com/elangreza14/advance-todo/internal/dto"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
