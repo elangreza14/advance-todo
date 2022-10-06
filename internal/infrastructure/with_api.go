@@ -2,17 +2,13 @@ package infrastructure
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/elangreza14/advance-todo/config"
-	"github.com/elangreza14/advance-todo/internal/core/auth"
 	"github.com/elangreza14/advance-todo/internal/handler/api"
-	postgresRepo "github.com/elangreza14/advance-todo/adapter/postgres"
-	"github.com/gofiber/fiber/v2"
 )
 
-func WithApi(env *config.Env) {
+func WithApi(env *config.Env) error {
 	conf, err := config.NewConfig(
 		env,
 		config.WithPostgres(config.DbSqlOption{
@@ -30,17 +26,12 @@ func WithApi(env *config.Env) {
 
 	if err != nil {
 		conf.Logger.Error("main.err", err)
-		os.Exit(1)
+		return err
 	}
 
-	postgresRepository := postgresRepo.NewPostgresRepo(conf, postgresRepo.WithUser())
-
-	authService := auth.NewAuthService(conf, postgresRepository.User)
-
-	app := fiber.New()
-
-	api.NewAuthApiHandler(conf, authService, app.Group("/auth"))
+	app := api.New(conf)
 
 	log.Fatal(app.Listen(":8080"))
 	conf.Logger.Info("app is running")
+	return nil
 }

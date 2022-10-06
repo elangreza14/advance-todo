@@ -13,5 +13,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	infrastructure.WithApi(env)
+	if err = infrastructure.WithApi(env); err != nil {
+		log.Fatal(err)
+	}
 }

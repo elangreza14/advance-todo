@@ -8,12 +8,13 @@ import (
 )
 
 type (
-	AuthApiHandler interface {
+	authApiHandler interface {
 		Register(c *fiber.Ctx) error
 	}
 )
 
-func NewAuthApiHandler(conf *config.Configuration, service auth.AuthService, router fiber.Router) {
-	var h AuthApiHandler = fiberApi.NewAuthFiber(conf, service)
+func newAuthApiHandler(conf *config.Configuration, service auth.AuthService, router fiber.Router) {
+	var h authApiHandler = fiberApi.NewAuthFiber(conf, service)
+
 	router.Post("/register", h.Register)
 }
