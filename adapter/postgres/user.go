@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/elangreza14/advance-todo/config"
-	"github.com/elangreza14/advance-todo/domain"
+	"github.com/elangreza14/advance-todo/internal/domain"
 	"github.com/google/uuid"
 )
 
