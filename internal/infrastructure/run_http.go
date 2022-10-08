@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/elangreza14/advance-todo/internal/handler/api"
 )
 
-func WithApi(env *config.Env) error {
+func RunHttp(env *config.Env) error {
 	conf, err := config.NewConfig(
 		env,
 		config.WithPostgres(config.DbSqlOption{
@@ -31,7 +32,29 @@ func WithApi(env *config.Env) error {
 
 	app := api.New(conf)
 
-	log.Fatal(app.Listen(":8080"))
+	go func() {
+		if err = app.Listen(":8080"); err != nil {
+			conf.Logger.Error("main.err", err)
+			log.Fatal(err)
+		}
+	}()
+
 	conf.Logger.Info("app is running")
+
+	GracefulShutdown(JobFunction{
+		"fiber": func(ctx context.Context) error {
+			if err := app.Shutdown(); err != nil {
+				return err
+			}
+			return nil
+		},
+		"postgres": func(ctx context.Context) error {
+			if err := conf.DbSql.Close(); err != nil {
+				return err
+			}
+			return nil
+		},
+	})
+
 	return nil
 }
