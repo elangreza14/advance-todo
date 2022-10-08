@@ -17,13 +17,12 @@ type (
 
 		Versioning
 	}
+	UserRepository interface {
+		GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
+		GetUserByEmail(ctx context.Context, email string) (*User, error)
+		CreateUser(ctx context.Context, req User) (*uuid.UUID, error)
+	}
 )
-
-type UserRepository interface {
-	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
-	CreateUser(ctx context.Context, req User) (*uuid.UUID, error)
-}
 
 func NewUser(req dto.RegisterUserRequest) User {
 	return User{
