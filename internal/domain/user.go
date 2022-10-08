@@ -19,8 +19,6 @@ type (
 	}
 )
 
-const costBcrypt = 16
-
 type UserRepository interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
@@ -35,10 +33,19 @@ func NewUser(req dto.RegisterUserRequest) User {
 }
 
 func (u *User) SetPassword(password string) error {
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), costBcrypt)
+	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	u.Password = string(pass)
+	return nil
+}
+
+func (u *User) ValidatePassword(password string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

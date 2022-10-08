@@ -13,7 +13,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err = infrastructure.RunHttp(env); err != nil {
+	if err = infrastructure.Run(env); err != nil {
 		log.Fatal(err)
 	}
 }

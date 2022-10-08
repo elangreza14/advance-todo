@@ -1,6 +1,12 @@
 #!make
 include local.env
 
+up-stack:
+	docker-compose --env-file local.env up --build -d
+
+up:
+	docker-compose --env-file local.env up -d
+
 run-local:
 	MODE=local go run main.go
 	
@@ -17,4 +23,4 @@ migrate-alter:
 migrate-down:
 	migrate -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSL}" -path ${POSTGRES_MIGRATION_FOLDER} down
 
-.PHONY: run-local run-live migrate-create migrate-alter migrate-down
+.PHONY: up-stack up run-local run-live migrate-create migrate-alter migrate-down
