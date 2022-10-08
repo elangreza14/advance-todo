@@ -10,6 +10,7 @@ import (
 type (
 	authApiHandler interface {
 		Register(c *fiber.Ctx) error
+		Login(c *fiber.Ctx) error
 	}
 )
 
@@ -17,4 +18,5 @@ func newAuthApiHandler(conf *config.Configuration, service auth.AuthService, rou
 	var h authApiHandler = fiberApi.NewAuthFiber(conf, service)
 
 	router.Post("/register", h.Register)
+	router.Post("/login", h.Login)
 }

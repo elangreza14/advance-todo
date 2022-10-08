@@ -2,14 +2,13 @@ package infrastructure
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/elangreza14/advance-todo/config"
 	"github.com/elangreza14/advance-todo/internal/handler/api"
 )
 
-func RunHttp(env *config.Env) error {
+func Run(env *config.Env) error {
 	conf, err := config.NewConfig(
 		env,
 		config.WithPostgres(config.DbSqlOption{
@@ -32,11 +31,12 @@ func RunHttp(env *config.Env) error {
 
 	app := api.New(conf)
 
-	go func() {
+	go func() error {
 		if err = app.Listen(":8080"); err != nil {
 			conf.Logger.Error("main.err", err)
-			log.Fatal(err)
+			return err
 		}
+		return nil
 	}()
 
 	conf.Logger.Info("app is running")

@@ -20,7 +20,7 @@ func NewAuthService(
 
 func (as *authService) RegisterUser(ctx context.Context, req dto.RegisterUserRequest) error {
 	if user, err := as.authRepo.GetUserByEmail(ctx, req.Email); (err != nil && err != sql.ErrNoRows) || user != nil {
-		err := domain.ErrorNotFoundEmail
+		err := domain.ErrorEmailAlreadyExist
 		as.conf.Logger.Error("authRepo.GetUserByEmail", err)
 		return err
 	}
@@ -51,9 +51,9 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 		return nil, err
 	}
 
-	if user.Password != req.Password {
-		as.conf.Logger.Error("user.Password != req.Password", err)
-		return nil, domain.ErrorNotFoundEmail
+	if err := user.ValidatePassword(req.Password); err != nil {
+		as.conf.Logger.Error("user.ValidatePassword", err)
+		return nil, domain.ErrorUserAndPassword
 	}
 
 	return &dto.LoginUserResponse{
