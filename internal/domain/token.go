@@ -1,44 +1,47 @@
 package domain
 
 import (
+	"context"
 	"time"
+
+	"github.com/elangreza14/advance-todo/adapter/token"
 
 	"github.com/google/uuid"
 )
 
 type (
-	Token struct {
+	TokenType string
+	Token     struct {
 		ID        uuid.UUID
 		UserID    uuid.UUID
 		Token     string
+		TokenType TokenType
 		ExpiredAt time.Time
 		IssuedAt  time.Time
 
 		Versioning
 	}
 
-	TokenGenerator struct {
-		ID        uuid.UUID
-		Token     string
-		ExpiredAt time.Time
-		IssuedAt  time.Time
-	}
-
 	TokenRepository interface {
-		GetTokenByUserID(UserID uuid.UUID) (*Token, error)
-		CreateToken(UserID uuid.UUID) (*Token, error)
+		GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.UUID) (*Token, error)
+		GetTokenByUserID(ctx context.Context, userId uuid.UUID) (*Token, error)
+		CreateToken(ctx context.Context, req Token) (*uuid.UUID, error)
 	}
 )
 
-func NewToken(req User) Token {
-	return Token{
-		UserID:     req.ID,       // user id
-		Token:      "",           // generate from jwt // create interface jwt
-		ExpiredAt:  time.Time{},  // based on jwt package
-		Versioning: Versioning{}, // based on jwt package
-	}
-}
+const (
+	Password  TokenType = "PASSWORD"
+	Authorize TokenType = "AUTHORIZE"
+	Refresh   TokenType = "REFRESH"
+)
 
-func (u *User) Validate(token string) (*Token, error) {
-	return nil, nil
+func NewToken(gen token.TokenGenerator, req User) *Token {
+	return &Token{
+		ID:        gen.ID,
+		UserID:    req.ID,
+		Token:     gen.Token,
+		ExpiredAt: gen.ExpiredAt,
+		IssuedAt:  gen.IssuedAt,
+		TokenType: Authorize,
+	}
 }

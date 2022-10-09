@@ -18,10 +18,10 @@ run-live:
 
 FILENAME?=file-name
 migrate-create:
-	migrate create -ext sql -tz Asia/Jakarta -dir ./migrations -format "20060102150405" create_${FILENAME}
+	migrate create -ext sql -tz Asia/Jakarta -dir ${POSTGRES_MIGRATION_FOLDER} -format "20060102150405" create_${FILENAME}
 
 migrate-alter:
-	migrate create -ext sql -tz Asia/Jakarta -dir ./migrations -format "20060102150405" alter_${FILENAME}
+	migrate create -ext sql -tz Asia/Jakarta -dir ${POSTGRES_MIGRATION_FOLDER} -format "20060102150405" alter_${FILENAME}
 
 migrate-down:
 	migrate -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSL}" -path ${POSTGRES_MIGRATION_FOLDER} down

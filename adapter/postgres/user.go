@@ -26,7 +26,7 @@ type (
 const (
 	getUserByEmailQuery string = `SELECT id, email, full_name, password, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "users" WHERE email=$1`
 	getUserByIDQuery    string = `SELECT id, email, full_name, password, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "users" WHERE id=$1`
-	createUserQuery     string = `INSERT INTO users(email, full_name, password, created_by) VALUES($1, $2, $3, $4) RETURNING id`
+	createUserQuery     string = `INSERT INTO users(id, email, full_name, password, created_by) VALUES($1, $2, $3, $4, $5) RETURNING id`
 )
 
 func WithUser() PostgresOption {
@@ -102,7 +102,12 @@ func (u *userRepo) CreateUser(ctx context.Context, req domain.User) (*uuid.UUID,
 	defer stmt.Close()
 
 	res := &uuid.UUID{}
-	if err := stmt.QueryRowContext(ctx, req.Email, req.FullName, req.Password, req.Email).Scan(&res); err != nil {
+	if err := stmt.QueryRowContext(ctx,
+		req.ID,
+		req.Email,
+		req.FullName,
+		req.Password,
+		req.ID).Scan(&res); err != nil {
 		return nil, err
 	}
 

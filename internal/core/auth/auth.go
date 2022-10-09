@@ -3,7 +3,10 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
+	tokenAdapter "github.com/elangreza14/advance-todo/adapter/token"
 	"github.com/elangreza14/advance-todo/config"
 	domain "github.com/elangreza14/advance-todo/internal/domain"
 	"github.com/elangreza14/advance-todo/internal/dto"
@@ -11,10 +14,14 @@ import (
 
 func NewAuthService(
 	configuration *config.Configuration,
-	authRepo domain.UserRepository) AuthService {
+	authRepo domain.UserRepository,
+	tokenRepo domain.TokenRepository) AuthService {
+
 	return &authService{
-		authRepo: authRepo,
-		conf:     configuration,
+		authRepo:  authRepo,
+		tokenRepo: tokenRepo,
+		gen:       tokenAdapter.NewGeneratorToken(configuration),
+		conf:      configuration,
 	}
 }
 
@@ -56,7 +63,38 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 		return nil, domain.ErrorUserAndPassword
 	}
 
+	token, err := as.tokenRepo.GetTokenByUserID(ctx, user.ID)
+	if err != nil && err != sql.ErrNoRows {
+		as.conf.Logger.Error("tokenRepo.GetTokenByUserID", err)
+		return nil, err
+
+	}
+
+	if token != nil {
+		tg, err := as.gen.Validate(token.Token)
+
+		fmt.Println(tg, err)
+		if tg != nil && err == nil {
+			return &dto.LoginUserResponse{
+				Token: tg.Token,
+			}, nil
+		}
+	}
+
+	tg, err := as.gen.Claims(1 * time.Minute)
+	if err != nil {
+		as.conf.Logger.Error("gen.Claims", err)
+		return nil, err
+	}
+
+	token = domain.NewToken(*tg, *user)
+
+	if _, err := as.tokenRepo.CreateToken(ctx, *token); err != nil {
+		as.conf.Logger.Error("tokenRepo.CreateToken", err)
+		return nil, err
+	}
+
 	return &dto.LoginUserResponse{
-		Token: "",
+		Token: token.Token,
 	}, nil
 }
