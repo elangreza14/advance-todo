@@ -1,12 +1,25 @@
 package token
 
 import (
+	"errors"
 	"time"
 
-	"github.com/elangreza14/advance-todo/internal/domain"
+	"github.com/google/uuid"
 )
 
-type GeneratorToken interface {
-	Claims(duration time.Duration) (*domain.TokenGenerator, error)
-	Validate(token string) (*domain.TokenGenerator, error)
-}
+type (
+	TokenGenerator struct {
+		ID        uuid.UUID
+		Token     string
+		ExpiredAt time.Time
+		IssuedAt  time.Time
+	}
+	GeneratorToken interface {
+		Claims(duration time.Duration) (*TokenGenerator, error)
+		Validate(token string) (*TokenGenerator, error)
+	}
+)
+
+var (
+	ErrTokenIsExpired error = errors.New("token is expired")
+)

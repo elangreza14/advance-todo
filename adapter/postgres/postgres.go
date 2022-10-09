@@ -4,7 +4,8 @@ import "github.com/elangreza14/advance-todo/config"
 
 type (
 	PostgresRepo struct {
-		User iUserRepo
+		User  iUserRepo
+		Token iTokenRepo
 	}
 
 	PostgresOption interface {

@@ -26,6 +26,7 @@ type (
 
 func NewUser(req dto.RegisterUserRequest) User {
 	return User{
+		ID:       uuid.New(),
 		Email:    req.Email,
 		FullName: req.FullName,
 	}

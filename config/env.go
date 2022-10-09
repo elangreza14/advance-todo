@@ -17,6 +17,10 @@ type (
 		POSTGRES_DB               string `mapstructure:"POSTGRES_DB"`
 		POSTGRES_PORT             int32  `mapstructure:"POSTGRES_PORT"`
 		POSTGRES_MIGRATION_FOLDER string `mapstructure:"POSTGRES_MIGRATION_FOLDER"`
+		REDIS_PASS                string `mapstructure:"REDIS_PASS"`
+		REDIS_PORT                int32  `mapstructure:"REDIS_PORT"`
+		REDIS_REPLICATION_MODE    string `mapstructure:"REDIS_REPLICATION_MODE"`
+		TOKEN_KEY                 string `mapstructure:"TOKEN_KEY"`
 	}
 )
 
@@ -48,12 +52,20 @@ func NewEnv() (*Env, error) {
 		env.POSTGRES_USER = env.getString("POSTGRES_USER")
 		env.POSTGRES_PASSWORD = env.getString("POSTGRES_PASSWORD")
 		env.POSTGRES_DB = env.getString("POSTGRES_DB")
-		port, err := env.getInt32("POSTGRES_PORT")
+		pgPort, err := env.getInt32("POSTGRES_PORT")
 		if err != nil {
 			return nil, err
 		}
-		env.POSTGRES_PORT = *port
+		env.POSTGRES_PORT = *pgPort
 		env.POSTGRES_MIGRATION_FOLDER = env.getString("POSTGRES_MIGRATION_FOLDER")
+		env.REDIS_PASS = env.getString("REDIS_PASS")
+		rdPort, err := env.getInt32("REDIS_PORT")
+		if err != nil {
+			return nil, err
+		}
+		env.REDIS_PORT = *rdPort
+		env.REDIS_REPLICATION_MODE = env.getString("REDIS_REPLICATION_MODE")
+		env.TOKEN_KEY = env.getString("TOKEN_KEY")
 
 		return env, nil
 	}

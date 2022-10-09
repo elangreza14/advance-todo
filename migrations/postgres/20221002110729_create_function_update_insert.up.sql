@@ -13,7 +13,6 @@ CREATE OR REPLACE FUNCTION log_insert_master()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.created_at = NOW();
-    NEW.updated_at = NOW();
     NEW.version = 0;
     RETURN NEW;
 END;

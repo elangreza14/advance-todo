@@ -10,7 +10,7 @@ import (
 )
 
 func New(conf *config.Configuration) *fiber.App {
-	postgresRepository := postgresRepo.NewPostgresRepo(conf, postgresRepo.WithUser())
+	postgresRepository := postgresRepo.NewPostgresRepo(conf, postgresRepo.WithUser(), postgresRepo.WithToken())
 	newService := core.New(conf, postgresRepository)
 
 	app := fiber.New()
