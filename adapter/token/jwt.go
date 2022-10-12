@@ -64,9 +64,17 @@ func (j *JWTGeneratorToken) Validate(token string) (*TokenGenerator, error) {
 
 		return []byte(j.conf.Env.TOKEN_KEY), nil
 	})
+
 	if err != nil {
-		j.conf.Logger.Error("jwt.ParseWithClaims", err)
-		return nil, err
+		j.conf.Logger.Error("jwt.ParseWithClaims", ErrTokenIsExpired)
+		// error range within jwt Standard Claim validation errors
+		// so we handle >= 8 with
+		// ValidationErrorExpired, ValidationErrorIssuedAt, ValidationErrorId
+		if err.(*jwt.ValidationError).Errors >= 8 {
+			return nil, ErrTokenIsExpired
+		} else {
+			return nil, ErrParsingToken
+		}
 	}
 
 	if claims, ok := parsed.Claims.(*CustomClaims); ok && parsed.Valid {
@@ -78,6 +86,6 @@ func (j *JWTGeneratorToken) Validate(token string) (*TokenGenerator, error) {
 		}, nil
 	} else {
 		j.conf.Logger.Error("parsed.Claims.(*CustomClaims)", ErrTokenIsExpired)
-		return nil, ErrTokenIsExpired
+		return nil, ErrParsingToken
 	}
 }

@@ -22,4 +22,5 @@ type (
 
 var (
 	ErrTokenIsExpired error = errors.New("token is expired")
+	ErrParsingToken   error = errors.New("error when parsing token")
 )

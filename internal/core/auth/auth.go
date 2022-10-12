@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	tokenAdapter "github.com/elangreza14/advance-todo/adapter/token"
@@ -72,8 +71,6 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 
 	if token != nil {
 		tg, err := as.gen.Validate(token.Token)
-
-		fmt.Println(tg, err)
 		if tg != nil && err == nil {
 			return &dto.LoginUserResponse{
 				Token: tg.Token,
