@@ -17,8 +17,10 @@ type (
 		POSTGRES_DB               string `mapstructure:"POSTGRES_DB"`
 		POSTGRES_PORT             int32  `mapstructure:"POSTGRES_PORT"`
 		POSTGRES_MIGRATION_FOLDER string `mapstructure:"POSTGRES_MIGRATION_FOLDER"`
+		REDIS_HOSTNAME            string `mapstructure:"REDIS_HOSTNAME"`
 		REDIS_PASS                string `mapstructure:"REDIS_PASS"`
 		REDIS_PORT                int32  `mapstructure:"REDIS_PORT"`
+		REDIS_DB                  int    `mapstructure:"REDIS_DB"`
 		REDIS_REPLICATION_MODE    string `mapstructure:"REDIS_REPLICATION_MODE"`
 		TOKEN_KEY                 string `mapstructure:"TOKEN_KEY"`
 	}
@@ -47,6 +49,7 @@ func NewEnv() (*Env, error) {
 
 		return env, nil
 	default:
+		// postgres
 		env.POSTGRES_HOSTNAME = env.getString("POSTGRES_HOSTNAME")
 		env.POSTGRES_SSL = env.getString("POSTGRES_SSL")
 		env.POSTGRES_USER = env.getString("POSTGRES_USER")
@@ -58,13 +61,23 @@ func NewEnv() (*Env, error) {
 		}
 		env.POSTGRES_PORT = *pgPort
 		env.POSTGRES_MIGRATION_FOLDER = env.getString("POSTGRES_MIGRATION_FOLDER")
+
+		// redis
+		env.REDIS_HOSTNAME = env.getString("REDIS_HOSTNAME")
 		env.REDIS_PASS = env.getString("REDIS_PASS")
 		rdPort, err := env.getInt32("REDIS_PORT")
 		if err != nil {
 			return nil, err
 		}
 		env.REDIS_PORT = *rdPort
+		rdDB, err := env.getInt("REDIS_DB")
+		if err != nil {
+			return nil, err
+		}
+		env.REDIS_DB = *rdDB
 		env.REDIS_REPLICATION_MODE = env.getString("REDIS_REPLICATION_MODE")
+
+		// jwt
 		env.TOKEN_KEY = env.getString("TOKEN_KEY")
 
 		return env, nil
@@ -90,4 +103,17 @@ func (e *Env) getInt32(envName string) (*int32, error) {
 	}
 
 	return nil, errors.New("error parsing to int 32 data")
+}
+
+func (e *Env) getInt(envName string) (*int, error) {
+	if res, ok := os.LookupEnv(envName); ok {
+		resInt, err := strconv.Atoi(res)
+		if err != nil {
+			return nil, err
+		}
+
+		return &resInt, nil
+	}
+
+	return nil, errors.New("error parsing to int data")
 }
