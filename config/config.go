@@ -9,6 +9,7 @@ type (
 		DbSql  *sql.DB
 		Env    *Env
 		Logger Logger
+		Cache  IRedis
 	}
 
 	Option interface {

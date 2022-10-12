@@ -22,12 +22,8 @@ func Run(env *config.Env) error {
 			EnableStackTrace: false,
 			IsDebug:          false,
 		}),
+		config.WithRedis(),
 	)
-
-	if err != nil {
-		conf.Logger.Error("main.err", err)
-		return err
-	}
 
 	app := api.New(conf)
 
