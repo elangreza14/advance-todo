@@ -83,6 +83,6 @@ func (m migrationLogger) Verbose() bool {
 }
 
 // later we can also adding mysql etc
-func WithPostgres(c DbSqlOption) Option {
+func WithDBSql(c DbSqlOption) Option {
 	return DbSqlOption(c)
 }
