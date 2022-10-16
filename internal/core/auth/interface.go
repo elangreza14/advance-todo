@@ -1,5 +1,7 @@
 package auth
 
+//go:generate mockgen -package=auth_test -destination=./mock_auth_test.go github.com/elangreza14/advance-todo/internal/core/auth AuthService
+
 import (
 	"context"
 

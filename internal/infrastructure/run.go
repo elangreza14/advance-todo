@@ -1,17 +1,18 @@
 package infrastructure
 
 import (
-	"context"
 	"time"
 
+	postgresRepo "github.com/elangreza14/advance-todo/adapter/postgres"
 	"github.com/elangreza14/advance-todo/config"
+	"github.com/elangreza14/advance-todo/internal/core"
 	"github.com/elangreza14/advance-todo/internal/handler/api"
 )
 
 func Run(env *config.Env) error {
 	conf, err := config.NewConfig(
 		env,
-		config.WithPostgres(config.DbSqlOption{
+		config.WithDBSql(config.DbSqlOption{
 			MaxLifeTime:  time.Duration(5 * time.Minute),
 			MaxIdleConns: 25,
 			MaxOpenConns: 25,
@@ -22,29 +23,29 @@ func Run(env *config.Env) error {
 			EnableStackTrace: false,
 			IsDebug:          false,
 		}),
-		config.WithRedis(),
+		config.WithCache(),
 	)
+	if err != nil {
+		conf.Logger.Error("run.config", err)
+		return err
+	}
 
-	app := api.New(conf)
+	postgresRepository := postgresRepo.NewPostgresRepo(conf, postgresRepo.WithUser(), postgresRepo.WithToken())
+	coreApp := core.New(conf, postgresRepository)
+	app := api.NewServer(conf, coreApp)
 
-	go func() error {
-		if err = app.Listen(":8080"); err != nil {
-			conf.Logger.Error("main.err", err)
-			return err
-		}
-		return nil
-	}()
+	app.Run()
 
 	conf.Logger.Info("app is running")
 
 	GracefulShutdown(JobFunction{
-		"fiber": func(ctx context.Context) error {
+		"fiber": func() error {
 			if err := app.Shutdown(); err != nil {
 				return err
 			}
 			return nil
 		},
-		"postgres": func(ctx context.Context) error {
+		"postgres": func() error {
 			if err := conf.DbSql.Close(); err != nil {
 				return err
 			}

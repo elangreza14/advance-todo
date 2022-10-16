@@ -10,41 +10,41 @@ import (
 )
 
 type (
-	IRedisKeyType string
+	ICacheKeyType string
 
-	IRedisKey struct {
-		Types    IRedisKeyType
+	ICacheKey struct {
+		Types    ICacheKeyType
 		Key      string
 		Data     interface{}
 		Duration time.Duration
 		IsNull   bool
 	}
 
-	IRedis interface {
+	ICache interface {
 		apply(*Configuration) error
-		formatKey(req IRedisKey) string
-		Set(ctx context.Context, key *IRedisKey) error
-		Get(ctx context.Context, key *IRedisKey) error
+		formatKey(req ICacheKey) string
+		Set(ctx context.Context, key *ICacheKey) error
+		Get(ctx context.Context, key *ICacheKey) error
 	}
 
-	iRedis struct {
+	iCache struct {
 		rdb *redis.Client
 	}
 )
 
 const (
-	TokenKey IRedisKeyType = "token"
+	TokenKey ICacheKeyType = "token"
 )
 
-func newRedis() IRedis {
-	return &iRedis{}
+func newCache() ICache {
+	return &iCache{}
 }
 
-func WithRedis() Option {
-	return newRedis()
+func WithCache() Option {
+	return newCache()
 }
 
-func (i *iRedis) apply(conf *Configuration) error {
+func (i *iCache) apply(conf *Configuration) error {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%v:%v", conf.Env.REDIS_HOSTNAME, conf.Env.REDIS_PORT),
 		Password: conf.Env.REDIS_PASS,
@@ -60,7 +60,7 @@ func (i *iRedis) apply(conf *Configuration) error {
 	return nil
 }
 
-func (i *iRedis) Set(ctx context.Context, req *IRedisKey) error {
+func (i *iCache) Set(ctx context.Context, req *ICacheKey) error {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (i *iRedis) Set(ctx context.Context, req *IRedisKey) error {
 	return nil
 }
 
-func (i *iRedis) Get(ctx context.Context, req *IRedisKey) error {
+func (i *iCache) Get(ctx context.Context, req *ICacheKey) error {
 	val, err := i.rdb.Get(ctx, i.formatKey(*req)).Result()
 	if err == redis.Nil {
 		req.Data = nil
@@ -94,6 +94,6 @@ func (i *iRedis) Get(ctx context.Context, req *IRedisKey) error {
 
 }
 
-func (i *iRedis) formatKey(req IRedisKey) string {
+func (i *iCache) formatKey(req ICacheKey) string {
 	return fmt.Sprintf("%v|%v", req.Types, req.Key)
 }

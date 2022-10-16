@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	Job         func(context.Context) error
+	Job         func() error
 	JobFunction map[string]Job
 	resultJob   struct {
 		name string
@@ -35,10 +35,11 @@ func GracefulShutdown(job JobFunction) {
 
 			fmt.Printf("\nstart cleanup %v", functionName)
 
+			// wait for one job 9 seconds
 			ctx, cancel := context.WithTimeout(context.Background(), 9*time.Second)
 			defer cancel()
 
-			if err := vf(ctx); err != nil {
+			if err := vf(); err != nil {
 				errors = append(errors, err)
 				functionResult <- resultJob{
 					name: functionName,
@@ -51,9 +52,11 @@ func GracefulShutdown(job JobFunction) {
 				}
 			}
 
+			<-ctx.Done()
 		}(i, v)
 	}
 
+	// wait based on len of job times 10 seconds
 	wait := time.After(time.Duration(len(job)*10) * time.Second)
 
 	for range job {

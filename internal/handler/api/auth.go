@@ -1,22 +1,81 @@
 package api
 
 import (
-	fiberApi "github.com/elangreza14/advance-todo/adapter/fiber_api"
-	"github.com/elangreza14/advance-todo/config"
+	"context"
+
 	"github.com/elangreza14/advance-todo/internal/core/auth"
+	"github.com/elangreza14/advance-todo/internal/dto"
 	"github.com/gofiber/fiber/v2"
 )
 
 type (
-	authApiHandler interface {
-		Register(c *fiber.Ctx) error
-		Login(c *fiber.Ctx) error
+	iAuthApiHandler interface {
+		HandleRegister(c *fiber.Ctx) error
+		HandleLogin(c *fiber.Ctx) error
+	}
+
+	authApiHandler struct {
+		service auth.AuthService
+		server  Server
 	}
 )
 
-func newAuthApiHandler(conf *config.Configuration, service auth.AuthService, router fiber.Router) {
-	var h authApiHandler = fiberApi.NewAuthFiber(conf, service)
+func NewAuthHandler(server Server, service auth.AuthService) iAuthApiHandler {
+	return &authApiHandler{
+		service: service,
+		server:  server,
+	}
+}
 
-	router.Post("/register", h.Register)
-	router.Post("/login", h.Login)
+func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
+	contextParent, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	req := &dto.RegisterUserRequest{}
+	if err := a.server.bodyParser(c, req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			&fiber.Map{
+				"status":  "fail",
+				"message": err.Error(),
+			})
+	}
+
+	if err := a.service.RegisterUser(contextParent, *req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			&fiber.Map{
+				"status":  "fail",
+				"message": err.Error(),
+			})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(
+		&fiber.Map{
+			"status":  "success",
+			"message": "created",
+		})
+}
+
+func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
+	contextParent, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	req := &dto.LoginUserRequest{}
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			&fiber.Map{
+				"status":  "fail",
+				"message": err.Error(),
+			})
+	}
+
+	res, err := a.service.LoginUser(contextParent, *req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(
+			&fiber.Map{
+				"status":  "fail",
+				"message": err.Error(),
+			})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(res)
 }
