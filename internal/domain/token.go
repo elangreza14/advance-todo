@@ -15,6 +15,7 @@ type (
 		ID        uuid.UUID
 		UserID    uuid.UUID
 		Token     string
+		IP        string
 		TokenType TokenType
 		ExpiredAt time.Time
 		IssuedAt  time.Time
@@ -24,7 +25,7 @@ type (
 
 	TokenRepository interface {
 		GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.UUID) (*Token, error)
-		GetTokenByUserID(ctx context.Context, userId uuid.UUID) (*Token, error)
+		GetTokenByUserIDAndIP(ctx context.Context, userId uuid.UUID, ip string, tokenType TokenType) (*Token, error)
 		CreateToken(ctx context.Context, req Token) (*uuid.UUID, error)
 	}
 )
@@ -35,7 +36,7 @@ const (
 	TokenTypeRefresh  TokenType = "REFRESH"
 )
 
-func NewToken(gen config.TokenGenerator, req User, tokenType TokenType) *Token {
+func NewToken(gen config.TokenGenerator, req User, tokenType TokenType, ip string) *Token {
 	return &Token{
 		ID:        gen.ID,
 		UserID:    req.ID,
@@ -43,5 +44,6 @@ func NewToken(gen config.TokenGenerator, req User, tokenType TokenType) *Token {
 		ExpiredAt: gen.ExpiredAt,
 		IssuedAt:  gen.IssuedAt,
 		TokenType: tokenType,
+		IP:        ip,
 	}
 }

@@ -60,37 +60,76 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 		return nil, domain.ErrorUserAndPassword
 	}
 
-	tkn, err := as.tokenRepo.GetTokenByUserID(ctx, user.ID)
+	// getting ip user from context
+	ipUser := ctx.Value(domain.ContextValueIP).(string)
+
+	tknAccess, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, user.ID, ipUser, domain.TokenTypeAccess)
 	if err != nil && err != sql.ErrNoRows {
-		as.conf.Logger.Error("tokenRepo.GetTokenByUserID", err)
+		as.conf.Logger.Error("tokenRepo.GetTokenByUserIDAndIP", err)
 		return nil, err
 	}
 
-	if tkn != nil {
-		tg, err := as.conf.Token.Validate(tkn.Token)
-		if tg != nil && err == nil {
+	tknRefresh, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, user.ID, ipUser, domain.TokenTypeRefresh)
+	if err != nil && err != sql.ErrNoRows {
+		as.conf.Logger.Error("tokenRepo.GetTokenByUserIDAndIP", err)
+		return nil, err
+	}
+
+	if tknAccess != nil && tknRefresh != nil {
+		tgAccess, errAccess := as.conf.Token.Validate(tknAccess.Token)
+		tgRefresh, errRefresh := as.conf.Token.Validate(tknRefresh.Token)
+		if (tgAccess != nil && errAccess == nil) &&
+			(tgRefresh != nil && errRefresh == nil) {
 			// if token is exist
 			// just return
 			return &dto.LoginUserResponse{
-				AccessToken: tg.Token,
+				AccessToken:  tgAccess.Token,
+				RefreshToken: tgRefresh.Token,
 			}, nil
 		}
 	}
 
-	tg, err := as.conf.Token.Claims(1 * time.Minute)
+	tknAccess, err = as.generateToken(ctx, domain.TokenTypeAccess, user, ipUser)
+	if err != nil {
+		as.conf.Logger.Error("as.generateToken", err)
+		return nil, err
+	}
+
+	tknRefresh, err = as.generateToken(ctx, domain.TokenTypeRefresh, user, ipUser)
+	if err != nil {
+		as.conf.Logger.Error("as.generateToken", err)
+		return nil, err
+	}
+
+	return &dto.LoginUserResponse{
+		AccessToken:  tknAccess.Token,
+		RefreshToken: tknRefresh.Token,
+	}, nil
+}
+
+func (as *authService) generateToken(ctx context.Context, tokenType domain.TokenType, user *domain.User, ipUser string) (*domain.Token, error) {
+	var duration time.Duration
+	switch tokenType {
+	case domain.TokenTypeRefresh:
+		duration = time.Minute * 5
+	case domain.TokenTypeAccess:
+		duration = time.Minute * 2
+	case domain.TokenTypePassword:
+		duration = time.Minute * 1
+	}
+
+	tgClaim, err := as.conf.Token.Claims(duration)
 	if err != nil {
 		as.conf.Logger.Error("Token.Claims", err)
 		return nil, err
 	}
 
-	tkn = domain.NewToken(*tg, *user, domain.TokenTypeAccess)
+	res := domain.NewToken(*tgClaim, *user, tokenType, ipUser)
 
-	if _, err := as.tokenRepo.CreateToken(ctx, *tkn); err != nil {
+	if _, err := as.tokenRepo.CreateToken(ctx, *res); err != nil {
 		as.conf.Logger.Error("tokenRepo.CreateToken", err)
 		return nil, err
 	}
 
-	return &dto.LoginUserResponse{
-		AccessToken: tkn.Token,
-	}, nil
+	return res, nil
 }

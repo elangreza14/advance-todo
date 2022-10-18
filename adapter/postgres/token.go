@@ -13,7 +13,7 @@ import (
 type (
 	iTokenRepo interface {
 		GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.UUID) (*domain.Token, error)
-		GetTokenByUserID(ctx context.Context, userId uuid.UUID) (*domain.Token, error)
+		GetTokenByUserIDAndIP(ctx context.Context, userId uuid.UUID, ip string, tokenType domain.TokenType) (*domain.Token, error)
 		CreateToken(ctx context.Context, req domain.Token) (*uuid.UUID, error)
 	}
 
@@ -24,9 +24,9 @@ type (
 )
 
 const (
-	getTokenByIDAndUserIDQuery string = `SELECT id, user_id, token, token_type, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE id=$1 AND user_id=$2;`
-	getTokenByUserIDQuery      string = `SELECT id, user_id, token, token_type, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1;`
-	createTokenQuery           string = `INSERT INTO tokens(id, user_id, token, token_type, expired_at, issued_at, created_by) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id;`
+	getTokenByIDAndUserIDQuery string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE id=$1 AND user_id=$2;`
+	getTokenByUserIDAndIPQuery string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE user_id=$1 AND ip=$2 AND token_type=$3 ORDER BY created_at DESC LIMIT 1;`
+	createTokenQuery           string = `INSERT INTO tokens(id, user_id, token, token_type, ip, expired_at, issued_at, created_by) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`
 )
 
 func WithToken() PostgresOption {
@@ -49,6 +49,7 @@ func (t *tokenRepo) GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.U
 		&res.UserID,
 		&res.Token,
 		&res.TokenType,
+		&res.IP,
 		&res.ExpiredAt,
 		&res.IssuedAt,
 		&res.Version,
@@ -67,16 +68,17 @@ func (t *tokenRepo) GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.U
 	return res, nil
 }
 
-func (t *tokenRepo) GetTokenByUserID(ctx context.Context, userId uuid.UUID) (*domain.Token, error) {
+func (t *tokenRepo) GetTokenByUserIDAndIP(ctx context.Context, userId uuid.UUID, ip string, tokenType domain.TokenType) (*domain.Token, error) {
 	ctx, cancel := t.NewContext(ctx)
 	defer cancel()
 
 	res := &domain.Token{}
-	err := t.db.QueryRowContext(ctx, getTokenByUserIDQuery, userId).Scan(
+	err := t.db.QueryRowContext(ctx, getTokenByUserIDAndIPQuery, userId, ip, tokenType).Scan(
 		&res.ID,
 		&res.UserID,
 		&res.Token,
 		&res.TokenType,
+		&res.IP,
 		&res.ExpiredAt,
 		&res.IssuedAt,
 		&res.Version,
@@ -111,6 +113,7 @@ func (t *tokenRepo) CreateToken(ctx context.Context, req domain.Token) (*uuid.UU
 		req.UserID,
 		req.Token,
 		req.TokenType,
+		req.IP,
 		req.ExpiredAt,
 		req.IssuedAt,
 		req.UserID,
