@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/elangreza14/advance-todo/internal/core/auth"
+	"github.com/elangreza14/advance-todo/internal/domain"
 	"github.com/elangreza14/advance-todo/internal/dto"
 	"github.com/gofiber/fiber/v2"
 )
@@ -68,7 +69,9 @@ func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
 			})
 	}
 
-	res, err := a.service.LoginUser(contextParent, *req)
+	contextValue := context.WithValue(contextParent, domain.ContextValueIP, c.IP())
+
+	res, err := a.service.LoginUser(contextValue, *req)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
 			&fiber.Map{
