@@ -10,6 +10,7 @@ type (
 		Env    *Env
 		Logger Logger
 		Cache  ICache
+		Token  IToken
 	}
 
 	Option interface {

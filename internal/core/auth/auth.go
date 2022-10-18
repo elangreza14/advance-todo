@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	tokenAdapter "github.com/elangreza14/advance-todo/adapter/token"
 	"github.com/elangreza14/advance-todo/config"
 	domain "github.com/elangreza14/advance-todo/internal/domain"
 	"github.com/elangreza14/advance-todo/internal/dto"
@@ -19,7 +18,6 @@ func NewAuthService(
 	return &authService{
 		authRepo:  authRepo,
 		tokenRepo: tokenRepo,
-		gen:       tokenAdapter.NewGeneratorToken(configuration),
 		conf:      configuration,
 	}
 }
@@ -62,36 +60,37 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 		return nil, domain.ErrorUserAndPassword
 	}
 
-	token, err := as.tokenRepo.GetTokenByUserID(ctx, user.ID)
+	tkn, err := as.tokenRepo.GetTokenByUserID(ctx, user.ID)
 	if err != nil && err != sql.ErrNoRows {
 		as.conf.Logger.Error("tokenRepo.GetTokenByUserID", err)
 		return nil, err
-
 	}
 
-	if token != nil {
-		tg, err := as.gen.Validate(token.Token)
+	if tkn != nil {
+		tg, err := as.conf.Token.Validate(tkn.Token)
 		if tg != nil && err == nil {
+			// if token is exist
+			// just return
 			return &dto.LoginUserResponse{
-				Token: tg.Token,
+				AccessToken: tg.Token,
 			}, nil
 		}
 	}
 
-	tg, err := as.gen.Claims(1 * time.Minute)
+	tg, err := as.conf.Token.Claims(1 * time.Minute)
 	if err != nil {
-		as.conf.Logger.Error("gen.Claims", err)
+		as.conf.Logger.Error("Token.Claims", err)
 		return nil, err
 	}
 
-	token = domain.NewToken(*tg, *user)
+	tkn = domain.NewToken(*tg, *user, domain.TokenTypeAccess)
 
-	if _, err := as.tokenRepo.CreateToken(ctx, *token); err != nil {
+	if _, err := as.tokenRepo.CreateToken(ctx, *tkn); err != nil {
 		as.conf.Logger.Error("tokenRepo.CreateToken", err)
 		return nil, err
 	}
 
 	return &dto.LoginUserResponse{
-		Token: token.Token,
+		AccessToken: tkn.Token,
 	}, nil
 }

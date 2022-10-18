@@ -24,9 +24,9 @@ func Run(env *config.Env) error {
 			IsDebug:          false,
 		}),
 		config.WithCache(),
+		config.WithToken(),
 	)
 	if err != nil {
-		conf.Logger.Error("run.config", err)
 		return err
 	}
 

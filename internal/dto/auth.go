@@ -13,6 +13,7 @@ type (
 	}
 
 	LoginUserResponse struct {
-		Token string `json:"token" validate:"required, email"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 )
