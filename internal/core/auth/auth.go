@@ -72,7 +72,7 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 			// if token is exist
 			// just return
 			return &dto.LoginUserResponse{
-				Token: tg.Token,
+				AccessToken: tg.Token,
 			}, nil
 		}
 	}
@@ -91,6 +91,6 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 	}
 
 	return &dto.LoginUserResponse{
-		Token: tkn.Token,
+		AccessToken: tkn.Token,
 	}, nil
 }

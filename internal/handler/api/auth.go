@@ -28,7 +28,7 @@ func NewAuthHandler(server Server, service auth.AuthService) iAuthApiHandler {
 }
 
 func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
-	contextParent, cancel := context.WithCancel(context.Background())
+	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
 	req := &dto.RegisterUserRequest{}
@@ -56,7 +56,7 @@ func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
 }
 
 func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
-	contextParent, cancel := context.WithCancel(context.Background())
+	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
 	req := &dto.LoginUserRequest{}
