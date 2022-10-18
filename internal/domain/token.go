@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/elangreza14/advance-todo/adapter/token"
+	"github.com/elangreza14/advance-todo/config"
 
 	"github.com/google/uuid"
 )
@@ -30,18 +30,18 @@ type (
 )
 
 const (
-	Password  TokenType = "PASSWORD"
-	Authorize TokenType = "AUTHORIZE"
-	Refresh   TokenType = "REFRESH"
+	TokenTypePassword TokenType = "PASSWORD"
+	TokenTypeAccess   TokenType = "ACCESS"
+	TokenTypeRefresh  TokenType = "REFRESH"
 )
 
-func NewToken(gen token.TokenGenerator, req User) *Token {
+func NewToken(gen config.TokenGenerator, req User, tokenType TokenType) *Token {
 	return &Token{
 		ID:        gen.ID,
 		UserID:    req.ID,
 		Token:     gen.Token,
 		ExpiredAt: gen.ExpiredAt,
 		IssuedAt:  gen.IssuedAt,
-		TokenType: Authorize,
+		TokenType: tokenType,
 	}
 }

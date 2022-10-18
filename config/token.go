@@ -1,17 +1,30 @@
-package token
+package config
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/elangreza14/advance-todo/config"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
 type (
-	JWTGeneratorToken struct {
-		conf *config.Configuration
+	TokenGenerator struct {
+		ID        uuid.UUID
+		Token     string
+		ExpiredAt time.Time
+		IssuedAt  time.Time
+	}
+
+	IToken interface {
+		apply(*Configuration) error
+		Claims(duration time.Duration) (*TokenGenerator, error)
+		Validate(token string) (*TokenGenerator, error)
+	}
+
+	iToken struct {
+		conf *Configuration
 	}
 
 	CustomClaims struct {
@@ -20,13 +33,27 @@ type (
 	}
 )
 
-func NewGeneratorToken(
-	conf *config.Configuration,
-) GeneratorToken {
-	return &JWTGeneratorToken{conf: conf}
+var (
+	ErrCreatingToken  error = errors.New("error creating token")
+	ErrTokenIsExpired error = errors.New("token is expired")
+	ErrParsingToken   error = errors.New("error parsing token")
+)
+
+func newToken() IToken {
+	return &iToken{}
 }
 
-func (j *JWTGeneratorToken) Claims(duration time.Duration) (*TokenGenerator, error) {
+func WithToken() Option {
+	return newToken()
+}
+
+func (it *iToken) apply(conf *Configuration) error {
+	it.conf = conf
+	conf.Token = it
+	return nil
+}
+
+func (it *iToken) Claims(duration time.Duration) (*TokenGenerator, error) {
 	id := uuid.New()
 	now := time.Now()
 	exp := now.Add(duration)
@@ -40,10 +67,9 @@ func (j *JWTGeneratorToken) Claims(duration time.Duration) (*TokenGenerator, err
 		},
 	})
 
-	res, err := token.SignedString([]byte(j.conf.Env.TOKEN_KEY))
+	res, err := token.SignedString([]byte(it.conf.Env.TOKEN_KEY))
 	if err != nil {
-		j.conf.Logger.Error("token.SignedString", err)
-		return nil, err
+		return nil, ErrCreatingToken
 	}
 
 	return &TokenGenerator{
@@ -54,19 +80,17 @@ func (j *JWTGeneratorToken) Claims(duration time.Duration) (*TokenGenerator, err
 	}, nil
 }
 
-func (j *JWTGeneratorToken) Validate(token string) (*TokenGenerator, error) {
+func (it *iToken) Validate(token string) (*TokenGenerator, error) {
 	parsed, err := jwt.ParseWithClaims(token, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			err := fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			j.conf.Logger.Error("token.Method.(*jwt.SigningMethodHMAC)", err)
 			return nil, err
 		}
 
-		return []byte(j.conf.Env.TOKEN_KEY), nil
+		return []byte(it.conf.Env.TOKEN_KEY), nil
 	})
 
 	if err != nil {
-		j.conf.Logger.Error("jwt.ParseWithClaims", ErrTokenIsExpired)
 		// error range within jwt Standard Claim validation errors
 		// so we handle >= 8 with
 		// ValidationErrorExpired, ValidationErrorIssuedAt, ValidationErrorId
@@ -85,7 +109,6 @@ func (j *JWTGeneratorToken) Validate(token string) (*TokenGenerator, error) {
 			IssuedAt:  claims.IssuedAt.Time,
 		}, nil
 	} else {
-		j.conf.Logger.Error("parsed.Claims.(*CustomClaims)", ErrTokenIsExpired)
 		return nil, ErrParsingToken
 	}
 }
