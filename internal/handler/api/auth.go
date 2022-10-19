@@ -34,26 +34,14 @@ func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
 
 	req := &dto.RegisterUserRequest{}
 	if err := a.server.bodyParser(c, req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			&fiber.Map{
-				"status":  "fail",
-				"message": err.Error(),
-			})
+		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	if err := a.service.RegisterUser(contextParent, *req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			&fiber.Map{
-				"status":  "fail",
-				"message": err.Error(),
-			})
+		return a.server.newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(
-		&fiber.Map{
-			"status":  "success",
-			"message": "created",
-		})
+	return a.server.newSuccessResponse(c, fiber.StatusCreated, nil)
 }
 
 func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
@@ -62,23 +50,15 @@ func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
 
 	req := &dto.LoginUserRequest{}
 	if err := c.BodyParser(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			&fiber.Map{
-				"status":  "fail",
-				"message": err.Error(),
-			})
+		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
 	contextValue := context.WithValue(contextParent, domain.ContextValueIP, c.IP())
 
 	res, err := a.service.LoginUser(contextValue, *req)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(
-			&fiber.Map{
-				"status":  "fail",
-				"message": err.Error(),
-			})
+		return a.server.newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(res)
+	return a.server.newSuccessResponse(c, fiber.StatusOK, res)
 }
