@@ -1,10 +1,15 @@
 package api
 
 import (
+	"time"
+
+	"github.com/bytedance/sonic"
 	"github.com/elangreza14/advance-todo/config"
 	"github.com/elangreza14/advance-todo/internal/core"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 type (
@@ -24,19 +29,29 @@ type (
 
 		// later we add middleware here
 	}
-
-	Header struct {
-		Errors []string `json:"errors"`
-	}
-
-	Response struct {
-		Header Header      `json:"header"`
-		Data   interface{} `json:"data"`
-	}
 )
 
 func NewServer(conf *config.Configuration, core core.Core) Server {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		JSONEncoder: sonic.Marshal,
+		JSONDecoder: sonic.Unmarshal,
+	})
+
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:8000, https://gofiber.net", // add later
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
+
+	// TODO do logger based on env condition
+	app.Use(logger.New(logger.Config{
+		Format:     "${time} | [${ip}]:${port} ${status} - ${method} ${path} \n",
+		TimeFormat: time.RFC1123,
+		TimeZone:   "Asia/Jakarta",
+	}))
 
 	return &server{
 		fbr:  app,
@@ -65,46 +80,4 @@ func (s *server) Shutdown() error {
 		return err
 	}
 	return nil
-}
-
-func (s *server) newRouter() {
-
-	// auth handlers
-	var handlerAuth iAuthApiHandler = NewAuthHandler(s, s.core.AuthService)
-	routerAuth := s.fbr.Group("/auth")
-	routerAuth.Post("/register", handlerAuth.HandleRegister)
-	routerAuth.Post("/login", handlerAuth.HandleLogin)
-}
-
-func (s *server) bodyParser(c *fiber.Ctx, data interface{}) error {
-	if err := c.BodyParser(data); err != nil {
-		return err
-	}
-
-	// TODO implement validation
-
-	return nil
-}
-
-func (s *server) newSuccessResponse(c *fiber.Ctx, statusCode int, data interface{}) error {
-	return c.Status(statusCode).JSON(Response{
-		Header: Header{
-			Errors: []string{},
-		},
-		Data: data,
-	})
-}
-
-func (s *server) newErrorResponse(c *fiber.Ctx, statusCode int, errList ...error) error {
-	errs := []string{}
-	for i := 0; i < len(errList); i++ {
-		errs = append(errs, errList[i].Error())
-	}
-
-	return c.Status(statusCode).JSON(Response{
-		Header: Header{
-			Errors: errs,
-		},
-		Data: nil,
-	})
 }

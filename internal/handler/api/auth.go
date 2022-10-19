@@ -13,6 +13,7 @@ type (
 	iAuthApiHandler interface {
 		HandleRegister(c *fiber.Ctx) error
 		HandleLogin(c *fiber.Ctx) error
+		HandleGetProfile(c *fiber.Ctx) error
 	}
 
 	authApiHandler struct {
@@ -45,6 +46,25 @@ func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
 }
 
 func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
+	contextParent, cancel := context.WithCancel(c.Context())
+	defer cancel()
+
+	req := &dto.LoginUserRequest{}
+	if err := c.BodyParser(req); err != nil {
+		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err)
+	}
+
+	contextValue := context.WithValue(contextParent, domain.ContextValueIP, c.IP())
+
+	res, err := a.service.LoginUser(contextValue, *req)
+	if err != nil {
+		return a.server.newErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	return a.server.newSuccessResponse(c, fiber.StatusOK, res)
+}
+
+func (a *authApiHandler) HandleGetProfile(c *fiber.Ctx) error {
 	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
