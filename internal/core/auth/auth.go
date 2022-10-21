@@ -8,8 +8,10 @@ import (
 	"github.com/elangreza14/advance-todo/config"
 	domain "github.com/elangreza14/advance-todo/internal/domain"
 	"github.com/elangreza14/advance-todo/internal/dto"
+	"github.com/google/uuid"
 )
 
+// NewAuthService is a new constructor service
 func NewAuthService(
 	configuration *config.Configuration,
 	authRepo domain.UserRepository,
@@ -104,6 +106,31 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 	return &dto.LoginUserResponse{
 		AccessToken:  tknAccess.Token,
 		RefreshToken: tknRefresh.Token,
+	}, nil
+}
+
+func (as *authService) GetUser(ctx context.Context) (*dto.UserDetailResponse, error) {
+	rawUserID := ctx.Value(domain.ContextValueUserID).(string)
+	userID, err := uuid.Parse(rawUserID)
+	if err != nil {
+		as.conf.Logger.Error("uuid.Parse", err)
+		return nil, err
+	}
+
+	user, err := as.authRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			as.conf.Logger.Error("authRepo.GetUserByEmail.sql.ErrNoRows", err)
+			return nil, domain.ErrorNotFoundEmail
+		}
+		as.conf.Logger.Error("authRepo.GetUserByEmail", err)
+		return nil, err
+	}
+
+	return &dto.UserDetailResponse{
+		Email:     user.Email,
+		FullName:  user.FullName,
+		CreatedAt: user.CreatedAt,
 	}, nil
 }
 

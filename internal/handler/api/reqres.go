@@ -3,10 +3,13 @@ package api
 import "github.com/gofiber/fiber/v2"
 
 type (
+	// Header is struct for handling all errors
+	// will add something later
 	Header struct {
 		Errors []string `json:"errors"`
 	}
 
+	// Response is struct for wrapper all data and header
 	Response struct {
 		Header Header      `json:"header"`
 		Data   interface{} `json:"data"`

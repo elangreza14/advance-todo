@@ -10,26 +10,27 @@ import (
 )
 
 type (
-	iAuthApiHandler interface {
+	iAuthAPIHandler interface {
 		HandleRegister(c *fiber.Ctx) error
 		HandleLogin(c *fiber.Ctx) error
 		HandleGetProfile(c *fiber.Ctx) error
 	}
 
-	authApiHandler struct {
+	authAPIHandler struct {
 		service auth.AuthService
 		server  Server
 	}
 )
 
-func NewAuthHandler(server Server, service auth.AuthService) iAuthApiHandler {
-	return &authApiHandler{
+// NewAuthHandler is handler for authentication route
+func NewAuthHandler(server Server, service auth.AuthService) iAuthAPIHandler {
+	return &authAPIHandler{
 		service: service,
 		server:  server,
 	}
 }
 
-func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
+func (a *authAPIHandler) HandleRegister(c *fiber.Ctx) error {
 	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
@@ -45,7 +46,7 @@ func (a *authApiHandler) HandleRegister(c *fiber.Ctx) error {
 	return a.server.newSuccessResponse(c, fiber.StatusCreated, nil)
 }
 
-func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
+func (a *authAPIHandler) HandleLogin(c *fiber.Ctx) error {
 	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
@@ -64,18 +65,13 @@ func (a *authApiHandler) HandleLogin(c *fiber.Ctx) error {
 	return a.server.newSuccessResponse(c, fiber.StatusOK, res)
 }
 
-func (a *authApiHandler) HandleGetProfile(c *fiber.Ctx) error {
+func (a *authAPIHandler) HandleGetProfile(c *fiber.Ctx) error {
 	contextParent, cancel := context.WithCancel(c.Context())
 	defer cancel()
 
-	req := &dto.LoginUserRequest{}
-	if err := c.BodyParser(req); err != nil {
-		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err)
-	}
+	contextValue := context.WithValue(contextParent, domain.ContextValueUserID, "user id")
 
-	contextValue := context.WithValue(contextParent, domain.ContextValueIP, c.IP())
-
-	res, err := a.service.LoginUser(contextValue, *req)
+	res, err := a.service.GetUser(contextValue)
 	if err != nil {
 		return a.server.newErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
