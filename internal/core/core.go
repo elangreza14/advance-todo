@@ -11,7 +11,6 @@ type Core struct {
 }
 
 func New(conf *config.Configuration, pr *postgresRepo.PostgresRepo) Core {
-
 	authService := auth.NewAuthService(conf, pr.User, pr.Token)
 	return Core{
 		AuthService: authService,

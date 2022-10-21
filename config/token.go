@@ -89,7 +89,6 @@ func (it *iToken) Validate(token string) (*TokenGenerator, error) {
 
 		return []byte(it.conf.Env.TOKEN_KEY), nil
 	})
-
 	if err != nil {
 		// error range within jwt Standard Claim validation errors
 		// so we handle >= 8 with

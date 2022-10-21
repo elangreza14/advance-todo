@@ -57,7 +57,6 @@ func (u *userRepo) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User,
 		&res.DeletedAt,
 		&res.DeletedBy,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,6 @@ func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*domain.Us
 		&res.DeletedAt,
 		&res.DeletedBy,
 	)
-
 	if err != nil {
 		return nil, err
 	}
