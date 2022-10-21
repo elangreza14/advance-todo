@@ -32,7 +32,6 @@ func GracefulShutdown(job JobFunction) {
 
 	for i, v := range job {
 		go func(functionName string, vf Job) {
-
 			fmt.Printf("\nstart cleanup %v", functionName)
 
 			// wait for one job 9 seconds
@@ -74,5 +73,4 @@ func GracefulShutdown(job JobFunction) {
 	}
 
 	fmt.Println("\napplication successfully shutdown")
-
 }

@@ -91,7 +91,6 @@ func (i *iCache) Get(ctx context.Context, req *ICacheKey) error {
 	req.IsNull = false
 
 	return nil
-
 }
 
 func (i *iCache) formatKey(req ICacheKey) string {

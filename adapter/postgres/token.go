@@ -60,7 +60,6 @@ func (t *tokenRepo) GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.U
 		&res.DeletedAt,
 		&res.DeletedBy,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,6 @@ func (t *tokenRepo) GetTokenByUserIDAndIP(ctx context.Context, userId uuid.UUID,
 		&res.DeletedAt,
 		&res.DeletedBy,
 	)
-
 	if err != nil {
 		return nil, err
 	}

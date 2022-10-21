@@ -1,7 +1,6 @@
 package api
 
 func (s *server) newRouter() {
-
 	// auth handlers
 	var handlerAuth iAuthApiHandler = NewAuthHandler(s, s.core.AuthService)
 	routerAuth := s.fbr.Group("/auth")

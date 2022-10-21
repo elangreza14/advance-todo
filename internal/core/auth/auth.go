@@ -13,8 +13,8 @@ import (
 func NewAuthService(
 	configuration *config.Configuration,
 	authRepo domain.UserRepository,
-	tokenRepo domain.TokenRepository) AuthService {
-
+	tokenRepo domain.TokenRepository,
+) AuthService {
 	return &authService{
 		authRepo:  authRepo,
 		tokenRepo: tokenRepo,
