@@ -14,6 +14,7 @@ type (
 	AuthService interface {
 		RegisterUser(ctx context.Context, req dto.RegisterUserRequest) error
 		LoginUser(ctx context.Context, req dto.LoginUserRequest) (*dto.LoginUserResponse, error)
+		GetUser(ctx context.Context) (*dto.UserDetailResponse, error)
 	}
 
 	authService struct {
