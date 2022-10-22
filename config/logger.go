@@ -22,7 +22,7 @@ type (
 		IsDebug          bool
 	}
 
-	Logger interface {
+	ILogger interface {
 		Info(logStr string, payload ...interface{})
 		Error(logStr string, payload ...interface{})
 		Debug(logStr string, payload ...interface{})

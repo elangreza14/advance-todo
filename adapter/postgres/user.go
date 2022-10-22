@@ -19,7 +19,7 @@ type (
 
 	userRepo struct {
 		db     *sql.DB
-		logger config.Logger
+		logger config.ILogger
 	}
 )
 

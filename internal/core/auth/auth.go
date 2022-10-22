@@ -160,3 +160,13 @@ func (as *authService) generateToken(ctx context.Context, tokenType domain.Token
 
 	return res, nil
 }
+
+func (as *authService) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Token, error) {
+	res, err := as.tokenRepo.GetTokenByID(ctx, id)
+	if err != nil {
+		as.conf.Logger.Error("tokenRepo.GetTokenByID", err)
+		return nil, err
+	}
+
+	return res, nil
+}

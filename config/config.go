@@ -8,7 +8,7 @@ type (
 	Configuration struct {
 		DbSql  *sql.DB
 		Env    *Env
-		Logger Logger
+		Logger ILogger
 		Cache  ICache
 		Token  IToken
 	}

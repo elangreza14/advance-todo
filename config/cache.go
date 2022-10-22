@@ -46,9 +46,9 @@ func WithCache() Option {
 
 func (i *iCache) apply(conf *Configuration) error {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%v:%v", conf.Env.REDIS_HOSTNAME, conf.Env.REDIS_PORT),
-		Password: conf.Env.REDIS_PASS,
-		DB:       conf.Env.REDIS_DB,
+		Addr:     fmt.Sprintf("%v:%v", conf.Env.RedisHostName, conf.Env.RedisPort),
+		Password: conf.Env.RedisPass,
+		DB:       conf.Env.RedisDB,
 	})
 
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
