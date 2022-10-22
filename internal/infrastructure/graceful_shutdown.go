@@ -10,7 +10,10 @@ import (
 )
 
 type (
-	Job         func() error
+	// Job is representing the shutdown function
+	Job func() error
+
+	// JobFunction is Grouping infrastructure.Job
 	JobFunction map[string]Job
 	resultJob   struct {
 		name string
@@ -18,6 +21,8 @@ type (
 	}
 )
 
+// GracefulShutdown is function to make sure all dependency
+// is shutdown correctly
 func GracefulShutdown(job JobFunction) {
 	c := make(chan os.Signal, 1)
 

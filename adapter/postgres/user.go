@@ -34,7 +34,7 @@ func WithUser() PostgresOption {
 }
 
 func (u *userRepo) apply(configuration *config.Configuration, repo *PostgresRepo) {
-	u.db = configuration.DbSql
+	u.db = configuration.DbSQL
 	u.logger = configuration.Logger
 	repo.User = u
 }

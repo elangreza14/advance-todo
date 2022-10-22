@@ -31,6 +31,8 @@ type (
 	}
 )
 
+// NewServer is a server wrapper
+// you can run and shutdown
 func NewServer(conf *config.Configuration, core core.Core) Server {
 	app := fiber.New(fiber.Config{
 		JSONEncoder: sonic.Marshal,
@@ -61,15 +63,12 @@ func NewServer(conf *config.Configuration, core core.Core) Server {
 }
 
 func (s *server) Run() error {
-	go func() error {
-		if err := s.fbr.Listen(":8080"); err != nil {
-			s.conf.Logger.Error("api.Server.Run", err)
-			return err
-		}
-		return nil
-	}()
-
 	s.newRouter()
+
+	if err := s.fbr.Listen(":8080"); err != nil {
+		s.conf.Logger.Error("api.Server.Run", err)
+		return err
+	}
 
 	return nil
 }

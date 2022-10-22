@@ -16,7 +16,11 @@ require (
 
 require (
 	github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06 // indirect
+	github.com/go-playground/locales v0.14.0 // indirect
+	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.1.2 // indirect
+	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 )

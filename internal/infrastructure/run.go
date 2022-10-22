@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"log"
 	"time"
 
 	postgresRepo "github.com/elangreza14/advance-todo/adapter/postgres"
@@ -9,11 +10,12 @@ import (
 	"github.com/elangreza14/advance-todo/internal/handler/api"
 )
 
+// Run is function to start all api
 func Run(env *config.Env) error {
 	conf, err := config.NewConfig(
 		env,
-		config.WithDBSql(config.DbSqlOption{
-			MaxLifeTime:  time.Duration(5 * time.Minute),
+		config.WithDBSql(config.DbSQLOption{
+			MaxLifeTime:  5 * time.Minute,
 			MaxIdleConns: 25,
 			MaxOpenConns: 25,
 		}),
@@ -25,6 +27,7 @@ func Run(env *config.Env) error {
 		}),
 		config.WithCache(),
 		config.WithToken(),
+		config.WithValidator(),
 	)
 	if err != nil {
 		return err
@@ -34,7 +37,11 @@ func Run(env *config.Env) error {
 	coreApp := core.New(conf, postgresRepository)
 	app := api.NewServer(conf, coreApp)
 
-	app.Run()
+	go func() {
+		if err := app.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	conf.Logger.Info("app is running")
 
@@ -46,7 +53,7 @@ func Run(env *config.Env) error {
 			return nil
 		},
 		"postgres": func() error {
-			if err := conf.DbSql.Close(); err != nil {
+			if err := conf.DbSQL.Close(); err != nil {
 				return err
 			}
 			return nil

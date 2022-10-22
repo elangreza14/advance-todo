@@ -10,6 +10,9 @@ import (
 )
 
 type (
+
+	// TokenGenerator is a struct for creating token based
+	// and use it in db and cache
 	TokenGenerator struct {
 		ID        uuid.UUID
 		Token     string
@@ -17,6 +20,7 @@ type (
 		IssuedAt  time.Time
 	}
 
+	// IToken is interface that handle all possibility use case in app
 	IToken interface {
 		apply(*Configuration) error
 		Claims(duration time.Duration) (*TokenGenerator, error)
@@ -27,7 +31,7 @@ type (
 		conf *Configuration
 	}
 
-	CustomClaims struct {
+	customClaims struct {
 		id uuid.UUID
 		jwt.RegisteredClaims
 	}
@@ -43,6 +47,7 @@ func newToken() IToken {
 	return &iToken{}
 }
 
+// WithToken is option interface to use token in app
 func WithToken() Option {
 	return newToken()
 }
@@ -58,7 +63,7 @@ func (it *iToken) Claims(duration time.Duration) (*TokenGenerator, error) {
 	now := time.Now()
 	exp := now.Add(duration)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, CustomClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, customClaims{
 		id: id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
@@ -81,7 +86,7 @@ func (it *iToken) Claims(duration time.Duration) (*TokenGenerator, error) {
 }
 
 func (it *iToken) Validate(token string) (*TokenGenerator, error) {
-	parsed, err := jwt.ParseWithClaims(token, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	parsed, err := jwt.ParseWithClaims(token, &customClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			err := fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			return nil, err
@@ -100,7 +105,7 @@ func (it *iToken) Validate(token string) (*TokenGenerator, error) {
 		return nil, ErrParsingToken
 	}
 
-	if claims, ok := parsed.Claims.(*CustomClaims); ok && parsed.Valid {
+	if claims, ok := parsed.Claims.(*customClaims); ok && parsed.Valid {
 		parsedID, err := uuid.Parse(claims.ID)
 		if err != nil {
 			return nil, ErrParsingToken
