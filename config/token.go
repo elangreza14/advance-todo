@@ -67,7 +67,7 @@ func (it *iToken) Claims(duration time.Duration) (*TokenGenerator, error) {
 		},
 	})
 
-	res, err := token.SignedString([]byte(it.conf.Env.TOKEN_KEY))
+	res, err := token.SignedString([]byte(it.conf.Env.TokenKey))
 	if err != nil {
 		return nil, ErrCreatingToken
 	}
@@ -87,7 +87,7 @@ func (it *iToken) Validate(token string) (*TokenGenerator, error) {
 			return nil, err
 		}
 
-		return []byte(it.conf.Env.TOKEN_KEY), nil
+		return []byte(it.conf.Env.TokenKey), nil
 	})
 	if err != nil {
 		// error range within jwt Standard Claim validation errors
@@ -95,19 +95,24 @@ func (it *iToken) Validate(token string) (*TokenGenerator, error) {
 		// ValidationErrorExpired, ValidationErrorIssuedAt, ValidationErrorId
 		if err.(*jwt.ValidationError).Errors >= 8 {
 			return nil, ErrTokenIsExpired
-		} else {
-			return nil, ErrParsingToken
 		}
+
+		return nil, ErrParsingToken
 	}
 
 	if claims, ok := parsed.Claims.(*CustomClaims); ok && parsed.Valid {
+		parsedID, err := uuid.Parse(claims.ID)
+		if err != nil {
+			return nil, ErrParsingToken
+		}
+
 		return &TokenGenerator{
-			ID:        claims.id,
+			ID:        parsedID,
 			Token:     token,
 			ExpiredAt: claims.ExpiresAt.Time,
 			IssuedAt:  claims.IssuedAt.Time,
 		}, nil
-	} else {
-		return nil, ErrParsingToken
 	}
+
+	return nil, ErrParsingToken
 }

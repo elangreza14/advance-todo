@@ -24,7 +24,7 @@ type (
 	}
 
 	TokenRepository interface {
-		GetTokenByIDAndUserID(ctx context.Context, id, userId uuid.UUID) (*Token, error)
+		GetTokenByID(ctx context.Context, id uuid.UUID) (*Token, error)
 		GetTokenByUserIDAndIP(ctx context.Context, userId uuid.UUID, ip string, tokenType TokenType) (*Token, error)
 		CreateToken(ctx context.Context, req Token) (*uuid.UUID, error)
 	}

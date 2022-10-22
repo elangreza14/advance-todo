@@ -27,12 +27,12 @@ type (
 
 func (c DbSqlOption) apply(config *Configuration) error {
 	connString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=%v",
-		config.Env.POSTGRES_USER,
-		config.Env.POSTGRES_PASSWORD,
-		config.Env.POSTGRES_HOSTNAME,
-		config.Env.POSTGRES_PORT,
-		config.Env.POSTGRES_DB,
-		config.Env.POSTGRES_SSL)
+		config.Env.PostgresUser,
+		config.Env.PostgresPassword,
+		config.Env.PostgresHostname,
+		config.Env.PostgresPort,
+		config.Env.PostgresDB,
+		config.Env.PostgresSsl)
 
 	pool, err := sql.Open("postgres", connString)
 	if err != nil {
@@ -54,7 +54,7 @@ func (c DbSqlOption) apply(config *Configuration) error {
 	}
 
 	// migrate db from migration
-	migration, err := migrate.New(fmt.Sprintf("file://%v", config.Env.POSTGRES_MIGRATION_FOLDER), connString)
+	migration, err := migrate.New(fmt.Sprintf("file://%v", config.Env.PostgresMigrationFolder), connString)
 	if err != nil {
 		return err
 	}
