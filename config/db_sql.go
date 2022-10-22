@@ -15,17 +15,18 @@ import (
 )
 
 type (
-	DbSqlOption struct {
+	// DbSQLOption is option to use in app
+	DbSQLOption struct {
 		MaxLifeTime  time.Duration
 		MaxIdleConns int
 		MaxOpenConns int
 	}
 
-	// this is for logger go-migrate
+	// migrationLogger is for logger go-migrate
 	migrationLogger struct{}
 )
 
-func (c DbSqlOption) apply(config *Configuration) error {
+func (c DbSQLOption) apply(config *Configuration) error {
 	connString := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=%v",
 		config.Env.PostgresUser,
 		config.Env.PostgresPassword,
@@ -46,7 +47,7 @@ func (c DbSqlOption) apply(config *Configuration) error {
 
 	// if ping exceeding 5 second
 	// will return
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := pool.PingContext(ctx); err != nil {
@@ -69,7 +70,7 @@ func (c DbSqlOption) apply(config *Configuration) error {
 	}
 
 	// assign pool into postgres so app can use it
-	config.DbSql = pool
+	config.DbSQL = pool
 	return nil
 }
 
@@ -82,7 +83,7 @@ func (m migrationLogger) Verbose() bool {
 	return true
 }
 
-// later we can also adding mysql etc
-func WithDBSql(c DbSqlOption) Option {
-	return DbSqlOption(c)
+// WithDBSql is option interface to use sql database in app
+func WithDBSql(c DbSQLOption) Option {
+	return c
 }

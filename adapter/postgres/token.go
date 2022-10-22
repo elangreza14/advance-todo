@@ -35,7 +35,7 @@ func WithToken() PostgresOption {
 }
 
 func (t *tokenRepo) apply(configuration *config.Configuration, repo *PostgresRepo) {
-	t.db = configuration.DbSql
+	t.db = configuration.DbSQL
 	t.logger = configuration.Logger
 	t.cache = configuration.Cache
 	repo.Token = t

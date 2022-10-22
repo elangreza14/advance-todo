@@ -1,6 +1,8 @@
 package api
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 type (
 	// Header is struct for handling all errors
@@ -20,8 +22,6 @@ func (s *server) bodyParser(c *fiber.Ctx, data interface{}) error {
 	if err := c.BodyParser(data); err != nil {
 		return err
 	}
-
-	// TODO implement validation
 
 	return nil
 }

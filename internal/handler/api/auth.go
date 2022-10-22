@@ -60,9 +60,14 @@ func (a *authAPIHandler) HandleLogin(c *fiber.Ctx) error {
 	defer cancel()
 
 	req := &dto.LoginUserRequest{}
-	if err := c.BodyParser(req); err != nil {
-		a.conf.Logger.Error("c.BodyParser", err)
+	if err := a.server.bodyParser(c, req); err != nil {
+		a.conf.Logger.Error("a.server.bodyParser", err)
 		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err)
+	}
+
+	if err := a.conf.Validator.Struct(req); err != nil {
+		a.conf.Logger.Error("a.server.validatorStruct", err)
+		return a.server.newErrorResponse(c, fiber.StatusBadRequest, err...)
 	}
 
 	contextValue := context.WithValue(contextParent, domain.ContextValueIP, c.IP())

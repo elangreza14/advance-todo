@@ -5,15 +5,15 @@ import "time"
 type (
 	// RegisterUserRequest is a request register
 	RegisterUserRequest struct {
-		Email    string `json:"email" validate:"required, email"`
-		FullName string `json:"full_name" validate:"required, gte=6"`
-		Password string `json:"password"  validate:"required, gte=6"`
+		Email    string `json:"email" validate:"required,email"`
+		FullName string `json:"full_name" validate:"required,gte=6"`
+		Password string `json:"password"  validate:"required,gte=6"`
 	}
 
 	// LoginUserRequest is a request for login
 	LoginUserRequest struct {
-		Email    string `json:"email" validate:"required, email"`
-		Password string `json:"password"  validate:"required, gte=6"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password"  validate:"required,gte=6"`
 	}
 
 	// LoginUserResponse is a response to get token data

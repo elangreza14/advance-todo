@@ -5,19 +5,23 @@ import (
 )
 
 type (
+	// Configuration is struct handle all configuration
 	Configuration struct {
-		DbSql  *sql.DB
-		Env    *Env
-		Logger ILogger
-		Cache  ICache
-		Token  IToken
+		DbSQL     *sql.DB
+		Env       *Env
+		Logger    ILogger
+		Cache     ICache
+		Token     IToken
+		Validator IValidator
 	}
 
+	// Option is interface to grouping all configuration
 	Option interface {
 		apply(*Configuration) error
 	}
 )
 
+// NewConfig is creating new configuration
 func NewConfig(
 	env *Env,
 	opts ...Option,
