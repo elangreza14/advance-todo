@@ -13,6 +13,8 @@ import (
 )
 
 type (
+
+	// Server is interface that holding all server behavior
 	Server interface {
 		Run() error
 		Shutdown() error
