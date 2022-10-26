@@ -93,14 +93,9 @@ func (u *userRepo) CreateUser(ctx context.Context, req domain.User) (*uuid.UUID,
 	ctx, cancel := u.NewContext(ctx)
 	defer cancel()
 
-	stmt, err := u.db.Prepare(createUserQuery)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
 	res := &uuid.UUID{}
-	if err := stmt.QueryRowContext(ctx,
+	if err := u.db.QueryRowContext(ctx,
+		createUserQuery,
 		req.ID,
 		req.Email,
 		req.FullName,

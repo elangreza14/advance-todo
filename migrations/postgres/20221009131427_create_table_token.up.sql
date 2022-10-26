@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "tokens" (
   "ip" VARCHAR NOT NULL,
   "issued_at" TIMESTAMPTZ NOT NULL,
   "expired_at" TIMESTAMPTZ NOT NULL,
+  "duration" BIGINT NOT NULL,
   "version" INT DEFAULT 0,
   "created_at" TIMESTAMPTZ NOT NULL,
   "created_by" uuid NOT NULL,
