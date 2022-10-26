@@ -68,7 +68,7 @@ func (s *server) Run() error {
 	s.newRouter()
 
 	if err := s.fbr.Listen(":8080"); err != nil {
-		s.conf.Logger.Error("api.Server.Run", err)
+		s.conf.Logger.Error("server.fbr.Listen", err)
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (s *server) Run() error {
 
 func (s *server) Shutdown() error {
 	if err := s.fbr.Shutdown(); err != nil {
-		s.conf.Logger.Error("api.Server.Shutdown", err)
+		s.conf.Logger.Error("server.fbr.Shutdown", err)
 		return err
 	}
 	return nil

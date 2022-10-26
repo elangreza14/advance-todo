@@ -27,19 +27,19 @@ func NewAuthService(
 func (as *authService) RegisterUser(ctx context.Context, req dto.RegisterUserRequest) error {
 	if user, err := as.authRepo.GetUserByEmail(ctx, req.Email); (err != nil && err != sql.ErrNoRows) || user != nil {
 		err := domain.ErrorEmailAlreadyExist
-		as.conf.Logger.Error("authRepo.GetUserByEmail", err)
+		as.conf.Logger.Error("authService.authRepo.GetUserByEmail", err)
 		return err
 	}
 
 	user := domain.NewUser(req)
 	if err := user.SetPassword(req.Password); err != nil {
-		as.conf.Logger.Error("user.SetPassword", err)
+		as.conf.Logger.Error("authService.user.SetPassword", err)
 		return err
 	}
 
 	_, err := as.authRepo.CreateUser(ctx, user)
 	if err != nil {
-		as.conf.Logger.Error("authRepo.CreateUser", err)
+		as.conf.Logger.Error("authService.authRepo.CreateUser", err)
 		return err
 	}
 
@@ -50,15 +50,15 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 	user, err := as.authRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			as.conf.Logger.Error("authRepo.GetUserByEmail.sql.ErrNoRows", err)
+			as.conf.Logger.Error("authService.authRepo.GetUserByEmail.sql.ErrNoRows", err)
 			return nil, domain.ErrorNotFoundEmail
 		}
-		as.conf.Logger.Error("authRepo.GetUserByEmail", err)
+		as.conf.Logger.Error("authService.authRepo.GetUserByEmail", err)
 		return nil, err
 	}
 
 	if err := user.ValidatePassword(req.Password); err != nil {
-		as.conf.Logger.Error("user.ValidatePassword", err)
+		as.conf.Logger.Error("authService.user.ValidatePassword", err)
 		return nil, domain.ErrorUserAndPassword
 	}
 
@@ -67,13 +67,13 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 
 	tknAccess, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, user.ID, ipUser, domain.TokenTypeAccess)
 	if err != nil && err != sql.ErrNoRows {
-		as.conf.Logger.Error("tokenRepo.GetTokenByUserIDAndIP", err)
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByUserIDAndIP", err)
 		return nil, err
 	}
 
 	tknRefresh, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, user.ID, ipUser, domain.TokenTypeRefresh)
 	if err != nil && err != sql.ErrNoRows {
-		as.conf.Logger.Error("tokenRepo.GetTokenByUserIDAndIP", err)
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByUserIDAndIP", err)
 		return nil, err
 	}
 
@@ -93,13 +93,13 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 
 	tknAccess, err = as.generateToken(ctx, domain.TokenTypeAccess, user, ipUser)
 	if err != nil {
-		as.conf.Logger.Error("as.generateToken", err)
+		as.conf.Logger.Error("authService.generateToken", err)
 		return nil, err
 	}
 
 	tknRefresh, err = as.generateToken(ctx, domain.TokenTypeRefresh, user, ipUser)
 	if err != nil {
-		as.conf.Logger.Error("as.generateToken", err)
+		as.conf.Logger.Error("authService.generateToken", err)
 		return nil, err
 	}
 
@@ -113,17 +113,17 @@ func (as *authService) GetUser(ctx context.Context) (*dto.UserDetailResponse, er
 	rawUserID := ctx.Value(domain.ContextValueUserID).(string)
 	userID, err := uuid.Parse(rawUserID)
 	if err != nil {
-		as.conf.Logger.Error("uuid.Parse", err)
+		as.conf.Logger.Error("authService.uuid.Parse", err)
 		return nil, err
 	}
 
 	user, err := as.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			as.conf.Logger.Error("authRepo.GetUserByEmail.sql.ErrNoRows", err)
+			as.conf.Logger.Error("authService.authRepo.GetUserByID.sql.ErrNoRows", err)
 			return nil, domain.ErrorNotFoundEmail
 		}
-		as.conf.Logger.Error("authRepo.GetUserByEmail", err)
+		as.conf.Logger.Error("authService.authRepo.GetUserByID", err)
 		return nil, err
 	}
 
@@ -147,14 +147,14 @@ func (as *authService) generateToken(ctx context.Context, tokenType domain.Token
 
 	tgClaim, err := as.conf.Token.Claims(duration)
 	if err != nil {
-		as.conf.Logger.Error("Token.Claims", err)
+		as.conf.Logger.Error("authService.conf.Token.Claims", err)
 		return nil, err
 	}
 
-	res := domain.NewToken(*tgClaim, *user, tokenType, ipUser)
+	res := domain.NewToken(*tgClaim, *user, tokenType, ipUser, duration)
 
 	if _, err := as.tokenRepo.CreateToken(ctx, *res); err != nil {
-		as.conf.Logger.Error("tokenRepo.CreateToken", err)
+		as.conf.Logger.Error("authService.tokenRepo.CreateToken", err)
 		return nil, err
 	}
 
@@ -164,7 +164,7 @@ func (as *authService) generateToken(ctx context.Context, tokenType domain.Token
 func (as *authService) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Token, error) {
 	res, err := as.tokenRepo.GetTokenByID(ctx, id)
 	if err != nil {
-		as.conf.Logger.Error("tokenRepo.GetTokenByID", err)
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByID", err)
 		return nil, err
 	}
 

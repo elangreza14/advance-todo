@@ -25,9 +25,9 @@ type (
 )
 
 const (
-	getTokenByIDQuery          string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE id=$1;`
-	getTokenByUserIDAndIPQuery string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE user_id=$1 AND ip=$2 AND token_type=$3 ORDER BY created_at DESC LIMIT 1;`
-	createTokenQuery           string = `INSERT INTO tokens(id, user_id, token, token_type, ip, expired_at, issued_at, created_by) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`
+	getTokenByIDQuery          string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, duration, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE id=$1;`
+	getTokenByUserIDAndIPQuery string = `SELECT id, user_id, token, token_type, ip, expired_at, issued_at, duration, version, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by FROM "tokens" WHERE user_id=$1 AND ip=$2 AND token_type=$3 ORDER BY created_at DESC LIMIT 1;`
+	createTokenQuery           string = `INSERT INTO tokens(id, user_id, token, token_type, ip, expired_at, issued_at, duration, created_by) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;`
 )
 
 func WithToken() PostgresOption {
@@ -58,7 +58,7 @@ func (t *tokenRepo) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Tok
 	}
 
 	if !cache.IsNull {
-		t.logger.Info("using cache token", res)
+		t.logger.Info("using cache token with duration until", time.Now().Add(res.Duration))
 		return res, nil
 	}
 
@@ -70,6 +70,7 @@ func (t *tokenRepo) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Tok
 		&res.IP,
 		&res.ExpiredAt,
 		&res.IssuedAt,
+		&res.Duration,
 		&res.Version,
 		&res.CreatedAt,
 		&res.CreatedBy,
@@ -98,6 +99,7 @@ func (t *tokenRepo) GetTokenByUserIDAndIP(ctx context.Context, userID uuid.UUID,
 		&res.IP,
 		&res.ExpiredAt,
 		&res.IssuedAt,
+		&res.Duration,
 		&res.Version,
 		&res.CreatedAt,
 		&res.CreatedBy,
@@ -117,14 +119,9 @@ func (t *tokenRepo) CreateToken(ctx context.Context, req domain.Token) (*uuid.UU
 	ctx, cancel := t.NewContext(ctx)
 	defer cancel()
 
-	stmt, err := t.db.Prepare(createTokenQuery)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
 	res := &uuid.UUID{}
-	if err := stmt.QueryRowContext(ctx,
+	if err := t.db.QueryRowContext(ctx,
+		createTokenQuery,
 		req.ID,
 		req.UserID,
 		req.Token,
@@ -132,6 +129,7 @@ func (t *tokenRepo) CreateToken(ctx context.Context, req domain.Token) (*uuid.UU
 		req.IP,
 		req.ExpiredAt,
 		req.IssuedAt,
+		req.Duration,
 		req.UserID,
 	).Scan(&res); err != nil {
 		return nil, err
@@ -141,7 +139,7 @@ func (t *tokenRepo) CreateToken(ctx context.Context, req domain.Token) (*uuid.UU
 		Types:    config.TokenKey,
 		Key:      req.ID.String(),
 		Data:     req,
-		Duration: time.Until(req.ExpiredAt),
+		Duration: req.Duration,
 	}); err != nil {
 		return nil, err
 	}

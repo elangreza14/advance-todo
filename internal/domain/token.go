@@ -13,7 +13,7 @@ type (
 	// TokenType is kind of token to save in db and cache
 	TokenType string
 
-	// TokenType is domain for handling all token
+	// Token is domain for handling all token
 	Token struct {
 		ID        uuid.UUID
 		UserID    uuid.UUID
@@ -22,6 +22,7 @@ type (
 		TokenType TokenType
 		ExpiredAt time.Time
 		IssuedAt  time.Time
+		Duration  time.Duration
 
 		Versioning
 	}
@@ -46,7 +47,7 @@ const (
 )
 
 // NewToken is constructor for Token
-func NewToken(gen config.TokenGenerator, req User, tokenType TokenType, ip string) *Token {
+func NewToken(gen config.TokenGenerator, req User, tokenType TokenType, ip string, duration time.Duration) *Token {
 	return &Token{
 		ID:        gen.ID,
 		UserID:    req.ID,
@@ -55,5 +56,6 @@ func NewToken(gen config.TokenGenerator, req User, tokenType TokenType, ip strin
 		IssuedAt:  gen.IssuedAt,
 		TokenType: tokenType,
 		IP:        ip,
+		Duration:  duration,
 	}
 }

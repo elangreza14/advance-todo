@@ -28,6 +28,13 @@ type (
 	}
 )
 
+var (
+	// ErrParsingInt32 is err when reading string and parse into int32 from env
+	ErrParsingInt32 = errors.New("error parsing to int 32 data")
+	// ErrParsingInt is err when reading string and parse into int from env
+	ErrParsingInt = errors.New("error parsing to int data")
+)
+
 // NewEnv is constructor for getting env cross platform
 // can be use with direct env or env file
 func NewEnv() (*Env, error) {
@@ -109,7 +116,7 @@ func (e *Env) getInt32(envName string) (*int32, error) {
 		return &resInt32, nil
 	}
 
-	return nil, errors.New("error parsing to int 32 data")
+	return nil, ErrParsingInt32
 }
 
 func (e *Env) getInt(envName string) (*int, error) {
@@ -122,5 +129,5 @@ func (e *Env) getInt(envName string) (*int, error) {
 		return &resInt, nil
 	}
 
-	return nil, errors.New("error parsing to int data")
+	return nil, ErrParsingInt
 }
