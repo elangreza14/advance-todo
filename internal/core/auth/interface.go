@@ -17,6 +17,7 @@ type (
 		LoginUser(ctx context.Context, req dto.LoginUserRequest) (*dto.LoginUserResponse, error)
 		GetUser(ctx context.Context) (*dto.UserDetailResponse, error)
 		GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Token, error) // use for getting header
+		RefreshToken(ctx context.Context) (*dto.LoginUserResponse, error)
 	}
 
 	authService struct {

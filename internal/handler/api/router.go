@@ -11,5 +11,5 @@ func (s *server) newRouter() {
 	routerAuth := s.fbr.Group("/auth")
 	routerAuth.Post("/register", handlerAuth.HandleRegister)
 	routerAuth.Post("/login", handlerAuth.HandleLogin)
-	routerAuth.Get("/profile", middleware.ValidateBearerToken, handlerAuth.HandleGetProfile)
+	routerAuth.Get("/profile", middleware.ValidateAccessToken, handlerAuth.HandleGetProfile)
 }

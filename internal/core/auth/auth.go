@@ -91,13 +91,13 @@ func (as *authService) LoginUser(ctx context.Context, req dto.LoginUserRequest) 
 		}
 	}
 
-	tknAccess, err = as.generateToken(ctx, domain.TokenTypeAccess, user, ipUser)
+	tknAccess, err = as.generateToken(ctx, domain.TokenTypeAccess, user.ID, ipUser)
 	if err != nil {
 		as.conf.Logger.Error("authService.generateToken", err)
 		return nil, err
 	}
 
-	tknRefresh, err = as.generateToken(ctx, domain.TokenTypeRefresh, user, ipUser)
+	tknRefresh, err = as.generateToken(ctx, domain.TokenTypeRefresh, user.ID, ipUser)
 	if err != nil {
 		as.conf.Logger.Error("authService.generateToken", err)
 		return nil, err
@@ -134,7 +134,70 @@ func (as *authService) GetUser(ctx context.Context) (*dto.UserDetailResponse, er
 	}, nil
 }
 
-func (as *authService) generateToken(ctx context.Context, tokenType domain.TokenType, user *domain.User, ipUser string) (*domain.Token, error) {
+func (as *authService) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Token, error) {
+	res, err := as.tokenRepo.GetTokenByID(ctx, id)
+	if err != nil {
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByID", err)
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (as *authService) RefreshToken(ctx context.Context) (*dto.LoginUserResponse, error) {
+	ipUser := ctx.Value(domain.ContextValueIP).(string)
+	rawUserID := ctx.Value(domain.ContextValueUserID).(string)
+	userID, err := uuid.Parse(rawUserID)
+	if err != nil {
+		as.conf.Logger.Error("authService.uuid.Parse", err)
+		return nil, err
+	}
+
+	tknAccess, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, userID, ipUser, domain.TokenTypeAccess)
+	if err != nil && err != sql.ErrNoRows {
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByUserIDAndIP", err)
+		return nil, err
+	}
+
+	tknRefresh, err := as.tokenRepo.GetTokenByUserIDAndIP(ctx, userID, ipUser, domain.TokenTypeRefresh)
+	if err != nil && err != sql.ErrNoRows {
+		as.conf.Logger.Error("authService.tokenRepo.GetTokenByUserIDAndIP", err)
+		return nil, err
+	}
+
+	if tknAccess != nil && tknRefresh != nil {
+		tgAccess, errAccess := as.conf.Token.Validate(tknAccess.Token)
+		tgRefresh, errRefresh := as.conf.Token.Validate(tknRefresh.Token)
+		if (tgAccess != nil && errAccess == nil) &&
+			(tgRefresh != nil && errRefresh == nil) {
+			// if token is exist
+			// just return
+			return &dto.LoginUserResponse{
+				AccessToken:  tgAccess.Token,
+				RefreshToken: tgRefresh.Token,
+			}, nil
+		}
+	}
+
+	tknAccess, err = as.generateToken(ctx, domain.TokenTypeAccess, userID, ipUser)
+	if err != nil {
+		as.conf.Logger.Error("authService.generateToken", err)
+		return nil, err
+	}
+
+	tknRefresh, err = as.generateToken(ctx, domain.TokenTypeRefresh, userID, ipUser)
+	if err != nil {
+		as.conf.Logger.Error("authService.generateToken", err)
+		return nil, err
+	}
+
+	return &dto.LoginUserResponse{
+		AccessToken:  tknAccess.Token,
+		RefreshToken: tknRefresh.Token,
+	}, nil
+}
+
+func (as *authService) generateToken(ctx context.Context, tokenType domain.TokenType, userId uuid.UUID, ipUser string) (*domain.Token, error) {
 	var duration time.Duration
 	switch tokenType {
 	case domain.TokenTypeRefresh:
@@ -151,20 +214,10 @@ func (as *authService) generateToken(ctx context.Context, tokenType domain.Token
 		return nil, err
 	}
 
-	res := domain.NewToken(*tgClaim, *user, tokenType, ipUser, duration)
+	res := domain.NewToken(*tgClaim, userId, tokenType, ipUser, duration)
 
 	if _, err := as.tokenRepo.CreateToken(ctx, *res); err != nil {
 		as.conf.Logger.Error("authService.tokenRepo.CreateToken", err)
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (as *authService) GetTokenByID(ctx context.Context, id uuid.UUID) (*domain.Token, error) {
-	res, err := as.tokenRepo.GetTokenByID(ctx, id)
-	if err != nil {
-		as.conf.Logger.Error("authService.tokenRepo.GetTokenByID", err)
 		return nil, err
 	}
 

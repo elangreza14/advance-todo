@@ -47,10 +47,10 @@ const (
 )
 
 // NewToken is constructor for Token
-func NewToken(gen config.TokenGenerator, req User, tokenType TokenType, ip string, duration time.Duration) *Token {
+func NewToken(gen config.TokenGenerator, userId uuid.UUID, tokenType TokenType, ip string, duration time.Duration) *Token {
 	return &Token{
 		ID:        gen.ID,
-		UserID:    req.ID,
+		UserID:    userId,
 		Token:     gen.Token,
 		ExpiredAt: gen.ExpiredAt,
 		IssuedAt:  gen.IssuedAt,
